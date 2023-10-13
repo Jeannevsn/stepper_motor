@@ -4,13 +4,13 @@
 int stepper(int swpulse, int m0, int m1, int m2, int dir, int dur);
 void clockwise(void);
 void counterclockwise(void);
-DigitalOut STBY(D8);
-DigitalOut STEP(D7);
-DigitalOut DIr(D6);
-DigitalOut EN(D12);
-DigitalOut M0(D11);
-DigitalOut M1(D10);
-DigitalOut M2(D9);
+DigitalOut STBY(D7);
+DigitalOut STEP(D6);
+DigitalOut DIr(D3);
+DigitalOut EN(A2);
+DigitalOut M0(D5);
+DigitalOut M1(D9);
+DigitalOut M2(D8);
 
 int main()
 {
