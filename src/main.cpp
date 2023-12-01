@@ -1,10 +1,12 @@
 #include "mbed.h"
 
-#define CONFIGURATION_CMD_ID 0x01
-#define DEPLACEMENT_CMD_ID 0x02
-#define ALIMENTATION_CMD_ID 0x03
+#define ID_base 0x100
 
-//Quentin est le plus fort
+#define CONFIGURATION_CMD_ID (ID_base + 0x01)
+#define DEPLACEMENT_CMD_ID (ID_base + 0x02)
+#define ALIMENTATION_CMD_ID (ID_base + 0x03)
+#define POSITIONFDC1_CMD_ID (ID_base + 0x04)
+#define FDC1_CMD_ID (ID_base + 0x05)
 
 // pin definitions
 int stepper(int swpulse, int m0, int m1, int m2, int dir, int dur);
@@ -13,6 +15,8 @@ void counterclockwise(void);
 void configureMode(uint8_t mode);
 void moveMotor(uint16_t nombrePas, uint8_t vitesse, uint8_t direction);
 void controlerAlimentation(uint8_t etat);
+void position_FDC1(int FDC1);
+void MoveMotorByFDC1(int FDC1);
 DigitalOut STBY(D7);
 DigitalOut STEP(D6);
 DigitalOut DIr(D3);
@@ -45,7 +49,7 @@ int main()
         CANMessage msg;
         if (can.read(msg))
         {
-            printf("Message received: %d\n", msg.id);
+            printf("Message received: %d : %d\n", msg.id, msg.data[0]);
 
             switch (msg.id) // check ID message
             {
@@ -58,14 +62,20 @@ int main()
             case ALIMENTATION_CMD_ID: // alimentation
                 controlerAlimentation(msg.data[0]);
                 break;
+            case POSITIONFDC1_CMD_ID: // position FDC1
+                position_FDC1(msg.data[0]);
+                break;
+            case FDC1_CMD_ID: // le moteur tourne ou non en fonction de la position du FDC1
+                MoveMotorByFDC1(msg.data[0]); 
+                break;
             }
         }
-        msg.id = 200;
+        /*msg.id = 200;
         msg.len = 0;
         msg.format = CANStandard;
         msg.type = CANData;
         can.write(msg);
-        ThisThread::sleep_for(1s);
+        ThisThread::sleep_for(1s);*/
     }
     return 0;
 }
@@ -167,4 +177,35 @@ void controlerAlimentation(uint8_t etat)
         STBY = 1;
     }
     can.write(CANMessage(ALIMENTATION_CMD_ID, "0x00", 1)); // action taken
+}
+
+void position_FDC1(int FDC1)
+{
+    CANMessage msg;
+    if(FDC1 == 1)
+    {
+        can.write(CANMessage(POSITIONFDC1_CMD_ID, "0x00", 1)); // FDC1 activé
+        printf("FDC1 activé\n");
+    }
+
+    if(FDC1 == 0)
+    {
+        can.write(CANMessage(POSITIONFDC1_CMD_ID, "0xFF", 1)); // FDC1 non activé
+        printf("FDC1 non activé\n");
+    }
+    MoveMotorByFDC1(FDC1);
+}
+
+void MoveMotorByFDC1(int FDC1)
+{
+    if(FDC1 == 1)
+    {
+        moveMotor(0,0,0);
+        can.write(CANMessage(FDC1_CMD_ID, "0x00", 1)); // le moteur ne tourne plus
+    }
+    else
+    {
+        moveMotor(1000,0,1);
+        can.write(CANMessage(FDC1_CMD_ID, "0x00", 1)); // le moteur tourne
+    }
 }
