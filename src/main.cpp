@@ -7,6 +7,8 @@
 #define ALIMENTATION_CMD_ID (ID_base + 0x03)
 #define POSITIONFDC1_CMD_ID (ID_base + 0x04)
 #define FDC1_CMD_ID (ID_base + 0x05)
+#define POSITIONFDC2_CMD_ID (ID_base + 0x06)
+#define FDC2_CMD_ID (ID_base + 0x07)
 
 // pin definitions
 int stepper(int swpulse, int m0, int m1, int m2, int dir, int dur);
@@ -51,22 +53,28 @@ int main()
         {
             printf("Message received: %d : %d\n", msg.id, msg.data[0]);
 
-            switch (msg.id) // check ID message
+            switch (msg.id) // vérification de l'ID du message
             {
-            case CONFIGURATION_CMD_ID: // congifuration mode
+            case CONFIGURATION_CMD_ID: // mode congifuration 
                 configureMode(msg.data[0]);
                 break;
             case DEPLACEMENT_CMD_ID: // deplacement
                 moveMotor((msg.data[0] << 8) | msg.data[1], msg.data[2], msg.data[3]);
                 break;
-            case ALIMENTATION_CMD_ID: // alimentation
+            case ALIMENTATION_CMD_ID: // alimentation du moteur
                 controlerAlimentation(msg.data[0]);
                 break;
-            case POSITIONFDC1_CMD_ID: // position FDC1
+            case POSITIONFDC1_CMD_ID: // position du FDC1
                 position_FDC1(msg.data[0]);
                 break;
             case FDC1_CMD_ID: // le moteur tourne ou non en fonction de la position du FDC1
                 MoveMotorByFDC1(msg.data[0]); 
+                break;
+            case POSITIONFDC2_CMD_ID: // position du FDC2
+                position_FDC2(msg.data[0]);
+                break;
+            case FDC2_CMD_ID: // le moteur tourne ou non en fonction de la position du FDC2
+                MoveMotorByFDC2(msg.data[0]); 
                 break;
             }
         }
@@ -80,7 +88,6 @@ int main()
     return 0;
 }
 
-//  function stepper for EVALSP820-XS
 int stepper(int swpulse, int m0, int m1, int m2, int dir, int dur)
 {
     M0 = m0;
@@ -88,7 +95,7 @@ int stepper(int swpulse, int m0, int m1, int m2, int dir, int dur)
     M2 = m2;
     DIr = dir;
     EN = 1;
-    // STEP GENERATOR
+    // step generator
     for (int i = 0; i < swpulse; i++)
     {
         STEP = 1;
@@ -206,6 +213,6 @@ void MoveMotorByFDC1(int FDC1)
     else
     {
         moveMotor(1000,0,1);
-        can.write(CANMessage(FDC1_CMD_ID, "0x00", 1)); // le moteur tourne
+        can.write(CANMessage(FDC1_CMD_ID, "0xFF", 1)); // le moteur tourne
     }
 }
