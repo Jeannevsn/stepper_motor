@@ -5,10 +5,10 @@
 #define CONFIGURATION_CMD_ID (ID_base + 0x01)
 #define DEPLACEMENT_CMD_ID (ID_base + 0x02)
 #define ALIMENTATION_CMD_ID (ID_base + 0x03)
-#define POSITIONFDC1_CMD_ID (ID_base + 0x04)
-#define FDC1_CMD_ID (ID_base + 0x05)
-#define POSITIONFDC2_CMD_ID (ID_base + 0x06)
-#define FDC2_CMD_ID (ID_base + 0x07)
+#define POSITIONFDChigh_CMD_ID (ID_base + 0x04)
+#define FDChigh_CMD_ID (ID_base + 0x05)
+#define POSITIONFDClow_CMD_ID (ID_base + 0x06)
+#define FDClow_CMD_ID (ID_base + 0x07)
 
 // pin definitions
 int stepper(int swpulse, int m0, int m1, int m2, int dir, int dur);
@@ -17,8 +17,8 @@ void counterclockwise(void);
 void configureMode(uint8_t mode);
 void moveMotor(uint16_t nombrePas, uint8_t vitesse, uint8_t direction);
 void controlerAlimentation(uint8_t etat);
-void position_FDC1(int FDC1);
-void MoveMotorByFDC1(int FDC1);
+void position_FDChigh(int FDChigh);
+void MoveMotorByFDChigh(int FDChigh);
 DigitalOut STBY(D7);
 DigitalOut STEP(D6);
 DigitalOut DIr(D3);
@@ -64,17 +64,17 @@ int main()
             case ALIMENTATION_CMD_ID: // alimentation du moteur
                 controlerAlimentation(msg.data[0]);
                 break;
-            case POSITIONFDC1_CMD_ID: // position du FDC1
-                position_FDC1(msg.data[0]);
+            case POSITIONFDChigh_CMD_ID: // position du FDChigh
+                position_FDChigh(msg.data[0]);
                 break;
-            case FDC1_CMD_ID: // le moteur tourne ou non en fonction de la position du FDC1
-                MoveMotorByFDC1(msg.data[0]); 
+            case FDChigh_CMD_ID: // le moteur tourne ou non en fonction de la position du FDChigh
+                MoveMotorByFDChigh(msg.data[0]); 
                 break;
-            case POSITIONFDC2_CMD_ID: // position du FDC2
-                position_FDC2(msg.data[0]);
+            case POSITIONFDClow_CMD_ID: // position du FDClow
+                position_FDClow(msg.data[0]);
                 break;
-            case FDC2_CMD_ID: // le moteur tourne ou non en fonction de la position du FDC2
-                MoveMotorByFDC2(msg.data[0]); 
+            case FDClow_CMD_ID: // le moteur tourne ou non en fonction de la position du FDClow
+                MoveMotorByFDClow(msg.data[0]); 
                 break;
             }
         }
@@ -186,64 +186,80 @@ void controlerAlimentation(uint8_t etat)
     can.write(CANMessage(ALIMENTATION_CMD_ID, "0x00", 1)); // action faite
 }
 
-void position_FDC1(int FDC1)
+void position_FDChigh(int FDChigh)
 {
     CANMessage msg;
-    if(FDC1 == 1)
+    if(FDChigh == 1)
     {
-        can.write(CANMessage(POSITIONFDC1_CMD_ID, "0x00", 1)); // FDC1 activé
-        printf("FDC1 activé\n");
+        can.write(CANMessage(POSITIONFDChigh_CMD_ID, "0x00", 1)); // FDChigh activé
+        printf("FDChigh activé\n");
     }
 
-    if(FDC1 == 0)
+    if(FDChigh == 0)
     {
-        can.write(CANMessage(POSITIONFDC1_CMD_ID, "0xFF", 1)); // FDC1 non activé
-        printf("FDC1 non activé\n");
+        can.write(CANMessage(POSITIONFDChigh_CMD_ID, "0xFF", 1)); // FDChigh non activé
+        printf("FDChigh non activé\n");
     }
-    MoveMotorByFDC1(FDC1);
+    MoveMotorByFDChigh(FDChigh);
 }
 
-void MoveMotorByFDC1(int FDC1)
+void MoveMotorByFDChigh(int FDChigh)
 {
-    if(FDC1 == 1)
+    if(FDChigh == 1)
     {
         moveMotor(0,0,0);
-        can.write(CANMessage(FDC1_CMD_ID, "0x00", 1)); // le moteur ne tourne plus
+        can.write(CANMessage(FDChigh_CMD_ID, "0x00", 1)); // le moteur ne tourne plus
     }
     else
     {
         moveMotor(1000,0,1);
-        can.write(CANMessage(FDC1_CMD_ID, "0xFF", 1)); // le moteur tourne
+        can.write(CANMessage(FDChigh_CMD_ID, "0xFF", 1)); // le moteur tourne
     }
 }
 
-void position_FDC2(int FDC2)
+void position_FDClow(int FDClow)
 {
     CANMessage msg;
-    if(FDC2 == 1)
+    if(FDClow == 1)
     {
-        can.write(CANMessage(POSITIONFDC2_CMD_ID, "0x00", 1)); // FDC2 activé
-        printf("FDC2 activé\n");
+        can.write(CANMessage(POSITIONFDClow_CMD_ID, "0x00", 1)); // FDClow activé
+        printf("FDClow activé\n");
     }
 
-    if(FDC2 == 0)
+    if(FDClow == 0)
     {
-        can.write(CANMessage(POSITIONFDC2_CMD_ID, "0xFF", 1)); // FDC2 non activé
-        printf("FDC2 non activé\n");
+        can.write(CANMessage(POSITIONFDClow_CMD_ID, "0xFF", 1)); // FDClow non activé
+        printf("FDClow non activé\n");
     }
-    MoveMotorByFDC2(FDC2);
+    MoveMotorByFDClow(FDClow);
 }
 
-void MoveMotorByFDC2(int FDC2)
+void MoveMotorByFDClow(int FDClow)
 {
-    if(FDC2 == 1)
+    if(FDClow == 1)
     {
         moveMotor(0,0,0);
-        can.write(CANMessage(FDC2_CMD_ID, "0x00", 1)); // le moteur ne tourne plus
+        can.write(CANMessage(FDClow_CMD_ID, "0x00", 1)); // le moteur ne tourne plus
     }
     else
     {
         moveMotor(1000,0,1);
-        can.write(CANMessage(FDC2_CMD_ID, "0xFF", 1)); // le moteur tourne
+        can.write(CANMessage(FDClow_CMD_ID, "0xFF", 1)); // le moteur tourne
     }
 }   
+
+void direction_of_rotation(int FDChigh, int FDClow)
+{
+    moveMotor(1000,0,1);
+    if(FDClow == 1)
+    {
+        moveMotor(0,0,0); // le moteur ne tourne plus
+        can.write(CANMessage(FDClow_CMD_ID, "0x00", 1)); // le moteur a touché le fin de course bas
+    }
+    else if(FDChigh == 1)
+    {
+        moveMotor(0,0,0); // le moteur ne tourne plus
+        can.write(CANMessage(FDChigh_CMD_ID, "0xFF", 1)); // le moteur a touché le fin de course haut
+    }
+}
+
