@@ -121,17 +121,17 @@ void configureMode(uint8_t mode)
 {
     switch (mode)
     {
-    case 0: // full step
+    case 0: // pas entier
         M0 = 0;
         M1 = 0;
         M2 = 0;
         break;
-    case 1: // half step
+    case 1: // moitié de pas
         M0 = 1;
         M1 = 0;
         M2 = 0;
         break;
-    case 2: // eighth step
+    case 2: // 8ème de pas
         M0 = 0;
         M1 = 1;
         M2 = 0;
@@ -162,15 +162,15 @@ void configureMode(uint8_t mode)
         M2 = 1;
         break;
     }
-    can.write(CANMessage(CONFIGURATION_CMD_ID, "0xFF", 1)); // configure mode
+    can.write(CANMessage(CONFIGURATION_CMD_ID, "0xFF", 1)); // configuration du mode
     printf("mode %d\n", mode);
 }
 
 void moveMotor(uint16_t nombrePas, uint8_t vitesse, uint8_t direction)
 {
     stepper(nombrePas, 0, 0, 0, direction, vitesse);
-    can.write(CANMessage(DEPLACEMENT_CMD_ID, "0x1F", 1)); // consideration of the action
-    can.write(CANMessage(DEPLACEMENT_CMD_ID, "0x2F", 1)); // action taken
+    can.write(CANMessage(DEPLACEMENT_CMD_ID, "0x1F", 1)); // consideration de l'action
+    can.write(CANMessage(DEPLACEMENT_CMD_ID, "0x2F", 1)); // action faite
 }
 
 void controlerAlimentation(uint8_t etat)
@@ -183,7 +183,7 @@ void controlerAlimentation(uint8_t etat)
     {
         STBY = 1;
     }
-    can.write(CANMessage(ALIMENTATION_CMD_ID, "0x00", 1)); // action taken
+    can.write(CANMessage(ALIMENTATION_CMD_ID, "0x00", 1)); // action faite
 }
 
 void position_FDC1(int FDC1)
@@ -216,3 +216,34 @@ void MoveMotorByFDC1(int FDC1)
         can.write(CANMessage(FDC1_CMD_ID, "0xFF", 1)); // le moteur tourne
     }
 }
+
+void position_FDC2(int FDC2)
+{
+    CANMessage msg;
+    if(FDC2 == 1)
+    {
+        can.write(CANMessage(POSITIONFDC2_CMD_ID, "0x00", 1)); // FDC2 activé
+        printf("FDC2 activé\n");
+    }
+
+    if(FDC2 == 0)
+    {
+        can.write(CANMessage(POSITIONFDC2_CMD_ID, "0xFF", 1)); // FDC2 non activé
+        printf("FDC2 non activé\n");
+    }
+    MoveMotorByFDC2(FDC2);
+}
+
+void MoveMotorByFDC2(int FDC2)
+{
+    if(FDC2 == 1)
+    {
+        moveMotor(0,0,0);
+        can.write(CANMessage(FDC2_CMD_ID, "0x00", 1)); // le moteur ne tourne plus
+    }
+    else
+    {
+        moveMotor(1000,0,1);
+        can.write(CANMessage(FDC2_CMD_ID, "0xFF", 1)); // le moteur tourne
+    }
+}   
